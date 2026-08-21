@@ -3,7 +3,7 @@ from django.contrib import admin
 from django.core.exceptions import ValidationError
 from nested_admin.formsets import NestedInlineFormSet
 
-from .models import AnswerOption, Question, QuizAttempt, QuizSet, UserAnswer
+from .models import AnswerOption, Question, QuizSet
 
 
 class AnswerOptionInlineFormSet(NestedInlineFormSet):
@@ -59,16 +59,3 @@ class QuestionAdmin(nested_admin.NestedModelAdmin):
 class AnswerOptionAdmin(admin.ModelAdmin):
     list_display = ('answer_text', 'question', 'is_correct')
     list_filter = ('is_correct', 'question__quiz_set')
-
-
-@admin.register(QuizAttempt)
-class QuizAttemptAdmin(admin.ModelAdmin):
-    list_display = ('user', 'quiz_set', 'status', 'score', 'correct_count', 'incorrect_count', 'timestamp')
-    list_filter = ('status', 'quiz_set')
-    readonly_fields = ('score', 'correct_count', 'incorrect_count', 'timestamp')
-
-
-@admin.register(UserAnswer)
-class UserAnswerAdmin(admin.ModelAdmin):
-    list_display = ('quiz_attempt', 'question', 'selected_answer', 'is_correct')
-    list_filter = ('is_correct',)

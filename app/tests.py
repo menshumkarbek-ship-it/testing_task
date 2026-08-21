@@ -1,7 +1,10 @@
 from django.contrib.auth.models import User
+from django.contrib import admin
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 
+from .admin import AnswerOptionInline
 from .models import AnswerOption, Question, QuizSet
 
 
@@ -41,15 +44,44 @@ class QuizFlowTests(TestCase):
 
 
 class QuizAdminTests(TestCase):
-    def test_quiz_change_page_contains_nested_answer_option_forms(self):
-        admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'safe-password-123')
-        quiz = QuizSet.objects.create(title='Admin quiz')
-        question = Question.objects.create(quiz_set=quiz, question_text='Question?', order_index=1)
-        AnswerOption.objects.create(question=question, answer_text='Correct', is_correct=True)
-        AnswerOption.objects.create(question=question, answer_text='Incorrect', is_correct=False)
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'safe-password-123')
+        self.quiz = QuizSet.objects.create(title='Admin quiz')
+        self.question = Question.objects.create(quiz_set=self.quiz, question_text='Question?', order_index=1)
 
-        self.client.force_login(admin_user)
-        response = self.client.get(reverse('admin:app_quizset_change', args=[quiz.pk]))
+    def _answer_formset(self, correct_values):
+        data = {
+            'answers-TOTAL_FORMS': str(len(correct_values)),
+            'answers-INITIAL_FORMS': '0',
+            'answers-MIN_NUM_FORMS': '0',
+            'answers-MAX_NUM_FORMS': '1000',
+        }
+        for index, is_correct in enumerate(correct_values):
+            data[f'answers-{index}-answer_text'] = f'Option {index}'
+            if is_correct:
+                data[f'answers-{index}-is_correct'] = 'on'
+        request = RequestFactory().post('/')
+        request.user = self.admin_user
+        inline = AnswerOptionInline(Question, admin.site)
+        formset_class = inline.get_formset(request, self.question)
+        return formset_class(data=data, instance=self.question, prefix='answers')
+
+    def test_quiz_change_page_contains_nested_answer_option_forms(self):
+        AnswerOption.objects.create(question=self.question, answer_text='Correct', is_correct=True)
+        AnswerOption.objects.create(question=self.question, answer_text='Incorrect', is_correct=False)
+
+        self.client.force_login(self.admin_user)
+        response = self.client.get(reverse('admin:app_quizset_change', args=[self.quiz.pk]))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'questions-0-answers-TOTAL_FORMS')
+
+    def test_answer_options_require_at_least_one_correct_choice(self):
+        formset = self._answer_formset([False, False])
+        self.assertFalse(formset.is_valid())
+        self.assertIn('Mark at least one answer option as correct.', formset.non_form_errors())
+
+    def test_answer_options_cannot_all_be_correct(self):
+        formset = self._answer_formset([True, True])
+        self.assertFalse(formset.is_valid())
+        self.assertIn('At least one answer option must be incorrect.', formset.non_form_errors())

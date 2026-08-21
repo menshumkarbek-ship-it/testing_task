@@ -49,7 +49,7 @@ class QuizAttempt(models.Model):
         ordering = ('-timestamp',)
 
     def __str__(self):
-        return f'{self.user} — {self.quiz_set} ({self.get_status_display()})'
+        return f'{self.user} - {self.quiz_set} ({self.get_status_display()})'
 
 
 class UserAnswer(models.Model):
