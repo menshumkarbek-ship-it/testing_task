@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Results · Quiz Hub{% endblock %}
+{% block content %}
+  <div class="card shadow-sm mx-auto text-center" style="max-width: 600px"><div class="card-body p-5">
+    <p class="text-primary fw-semibold">{{ attempt.quiz_set.title }}</p><h1>Quiz complete</h1>
+    <div class="display-3 fw-bold my-4">{{ attempt.score|floatformat:0 }}%</div>
+    <div class="row"><div class="col"><strong class="d-block fs-3 text-success">{{ attempt.correct_count }}</strong>Correct</div><div class="col"><strong class="d-block fs-3 text-danger">{{ attempt.incorrect_count }}</strong>Incorrect</div></div>
+    <a class="btn btn-primary mt-4" href="{% url 'quiz_catalog' %}">Back to catalog</a>
+  </div></div>
+{% endblock %}

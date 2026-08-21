@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Question {{ number }} · Quiz Hub{% endblock %}
+{% block content %}
+  <div class="card shadow-sm mx-auto" style="max-width: 720px"><div class="card-body p-4">
+    <p class="text-primary fw-semibold mb-1">{{ attempt.quiz_set.title }}</p>
+    <div class="progress mb-4" role="progressbar" aria-label="Quiz progress"><div class="progress-bar" style="width: {% widthratio number total 100 %}%"></div></div>
+    <p class="text-muted">Question {{ number }} of {{ total }}</p><h1 class="h3 mb-4">{{ question.question_text }}</h1>
+    <form method="post">{% csrf_token %}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      {% for choice in form.answers %}<div class="form-check mb-3">{{ choice.tag }}<label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></div>{% endfor %}
+      {% if form.errors %}<div class="text-danger small mb-3">{{ form.errors }}</div>{% endif %}
+      <button class="btn btn-primary">Submit answer</button>
+    </form>
+  </div></div>
+{% endblock %}
