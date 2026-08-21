@@ -38,3 +38,18 @@ class QuizFlowTests(TestCase):
         attempt = self.user.quiz_attempts.get()
         response = self.client.post(reverse('quiz_question', args=[attempt.pk, 1]), {})
         self.assertContains(response, 'Select at least one answer')
+
+
+class QuizAdminTests(TestCase):
+    def test_quiz_change_page_contains_nested_answer_option_forms(self):
+        admin_user = User.objects.create_superuser('admin', 'admin@example.com', 'safe-password-123')
+        quiz = QuizSet.objects.create(title='Admin quiz')
+        question = Question.objects.create(quiz_set=quiz, question_text='Question?', order_index=1)
+        AnswerOption.objects.create(question=question, answer_text='Correct', is_correct=True)
+        AnswerOption.objects.create(question=question, answer_text='Incorrect', is_correct=False)
+
+        self.client.force_login(admin_user)
+        response = self.client.get(reverse('admin:app_quizset_change', args=[quiz.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'questions-0-answers-TOTAL_FORMS')
